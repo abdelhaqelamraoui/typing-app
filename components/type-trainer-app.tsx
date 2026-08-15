@@ -12,6 +12,7 @@ import { Progress } from "@/components/ui/progress";
 
 export function TypeTrainerApp() {
   const [selectedId, setSelectedId] = useState(LESSONS[0].id);
+  const [showKeyboard, setShowKeyboard] = useState(true);
   const { completed, complete } = useLessonProgress();
 
   const selectedIndex = LESSONS.findIndex((l) => l.id === selectedId);
@@ -55,7 +56,14 @@ export function TypeTrainerApp() {
         </aside>
 
         <main>
-          <TypingTrainer key={lesson.id} lesson={lesson} locked={isLocked} onComplete={complete} />
+          <TypingTrainer
+            key={lesson.id}
+            lesson={lesson}
+            locked={isLocked}
+            onComplete={complete}
+            showKeyboard={showKeyboard}
+            onToggleKeyboard={() => setShowKeyboard((v) => !v)}
+          />
         </main>
       </div>
     </div>

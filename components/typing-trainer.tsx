@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Lock, RotateCcw } from "lucide-react";
+import { Keyboard, Lock, RotateCcw } from "lucide-react";
 
 import { Lesson, generateDrillText } from "@/lib/lessons";
 import { typewriterSound } from "@/lib/typewriter-sound";
@@ -9,14 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { VirtualKeyboard } from "@/components/virtual-keyboard";
 
 type Props = {
   lesson: Lesson;
   locked: boolean;
   onComplete: (lessonId: string) => void;
+  showKeyboard: boolean;
+  onToggleKeyboard: () => void;
 };
 
-export function TypingTrainer({ lesson, locked, onComplete }: Props) {
+export function TypingTrainer({ lesson, locked, onComplete, showKeyboard, onToggleKeyboard }: Props) {
   const [text, setText] = useState(() => generateDrillText(lesson.keys));
   const [typedIndex, setTypedIndex] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
@@ -115,10 +118,15 @@ export function TypingTrainer({ lesson, locked, onComplete }: Props) {
             <CardTitle>{lesson.title}</CardTitle>
             <CardDescription>{lesson.hint}</CardDescription>
           </div>
-          <div className="flex gap-3 text-sm text-muted-foreground">
-            <span>{stats.wpm} wpm</span>
-            <span>{stats.accuracy}% acc</span>
-            <span>{errorCount} errors</span>
+          <div className="flex items-center gap-3">
+            <div className="flex gap-3 text-sm text-muted-foreground">
+              <span>{stats.wpm} wpm</span>
+              <span>{stats.accuracy}% acc</span>
+              <span>{errorCount} errors</span>
+            </div>
+            <Button size="icon-sm" variant="outline" aria-label="Toggle on-screen keyboard" onClick={onToggleKeyboard}>
+              <Keyboard />
+            </Button>
           </div>
         </div>
       </CardHeader>
@@ -177,6 +185,8 @@ export function TypingTrainer({ lesson, locked, onComplete }: Props) {
             </Button>
           </div>
         )}
+
+        {showKeyboard && <VirtualKeyboard nextKey={finished ? null : text[typedIndex]} />}
       </CardContent>
     </Card>
   );
