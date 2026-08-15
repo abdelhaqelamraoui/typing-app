@@ -9,17 +9,24 @@ import { usePersistentState } from "@/hooks/use-persistent-state";
 import { LessonList } from "@/components/lesson-list";
 import { TypingTrainer } from "@/components/typing-trainer";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { HandGuideModal } from "@/components/hand-guide-modal";
 import { Progress } from "@/components/ui/progress";
 
 export function TypeTrainerApp() {
   const [selectedId, setSelectedId] = useState(LESSONS[0].id);
   const [showKeyboard, setShowKeyboard] = usePersistentState("typing-app:show-keyboard", true);
   const [fontSize, setFontSize] = usePersistentState("typing-app:font-size", 20);
+  const [handGuideOpen, setHandGuideOpen] = useState(true);
   const { completed, complete } = useLessonProgress();
 
   const selectedIndex = LESSONS.findIndex((l) => l.id === selectedId);
   const lesson = LESSONS[selectedIndex];
   const isLocked = selectedIndex > 0 && !completed.has(LESSONS[selectedIndex - 1].id);
+
+  const handleSelectLesson = (id: string) => {
+    setSelectedId(id);
+    setHandGuideOpen(true);
+  };
 
   const progressPct = useMemo(
     () => Math.round((completed.size / LESSONS.length) * 100),
@@ -53,7 +60,7 @@ export function TypeTrainerApp() {
             lessons={LESSONS}
             selectedId={selectedId}
             completed={completed}
-            onSelect={setSelectedId}
+            onSelect={handleSelectLesson}
           />
         </aside>
 
@@ -67,9 +74,12 @@ export function TypeTrainerApp() {
             onToggleKeyboard={() => setShowKeyboard((v) => !v)}
             fontSize={fontSize}
             onFontSizeChange={setFontSize}
+            onShowHandGuide={() => setHandGuideOpen(true)}
           />
         </main>
       </div>
+
+      <HandGuideModal lesson={lesson} open={handGuideOpen && !isLocked} onOpenChange={setHandGuideOpen} />
     </div>
   );
 }

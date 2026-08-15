@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Keyboard, Lock, RotateCcw } from "lucide-react";
+import { Hand, Keyboard, Lock, RotateCcw } from "lucide-react";
 
 import { Lesson, generateDrillText } from "@/lib/lessons";
 import { typewriterSound } from "@/lib/typewriter-sound";
@@ -20,6 +20,7 @@ type Props = {
   onToggleKeyboard: () => void;
   fontSize: number;
   onFontSizeChange: (size: number) => void;
+  onShowHandGuide: () => void;
 };
 
 export function TypingTrainer({
@@ -30,6 +31,7 @@ export function TypingTrainer({
   onToggleKeyboard,
   fontSize,
   onFontSizeChange,
+  onShowHandGuide,
 }: Props) {
   const [text, setText] = useState(() => generateDrillText(lesson.keys));
   const [typedIndex, setTypedIndex] = useState(0);
@@ -147,6 +149,9 @@ export function TypingTrainer({
               />
               <span className="text-base text-muted-foreground">A</span>
             </div>
+            <Button size="icon-sm" variant="outline" aria-label="Show finger position guide" onClick={onShowHandGuide}>
+              <Hand />
+            </Button>
             <Button size="icon-sm" variant="outline" aria-label="Toggle on-screen keyboard" onClick={onToggleKeyboard}>
               <Keyboard />
             </Button>
