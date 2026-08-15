@@ -5,6 +5,7 @@ import { Keyboard } from "lucide-react";
 
 import { LESSONS } from "@/lib/lessons";
 import { useLessonProgress } from "@/hooks/use-lesson-progress";
+import { usePersistentState } from "@/hooks/use-persistent-state";
 import { LessonList } from "@/components/lesson-list";
 import { TypingTrainer } from "@/components/typing-trainer";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -12,7 +13,8 @@ import { Progress } from "@/components/ui/progress";
 
 export function TypeTrainerApp() {
   const [selectedId, setSelectedId] = useState(LESSONS[0].id);
-  const [showKeyboard, setShowKeyboard] = useState(true);
+  const [showKeyboard, setShowKeyboard] = usePersistentState("typing-app:show-keyboard", true);
+  const [fontSize, setFontSize] = usePersistentState("typing-app:font-size", 20);
   const { completed, complete } = useLessonProgress();
 
   const selectedIndex = LESSONS.findIndex((l) => l.id === selectedId);
@@ -63,6 +65,8 @@ export function TypeTrainerApp() {
             onComplete={complete}
             showKeyboard={showKeyboard}
             onToggleKeyboard={() => setShowKeyboard((v) => !v)}
+            fontSize={fontSize}
+            onFontSizeChange={setFontSize}
           />
         </main>
       </div>

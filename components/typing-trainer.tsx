@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import { VirtualKeyboard } from "@/components/virtual-keyboard";
 
 type Props = {
@@ -17,9 +18,19 @@ type Props = {
   onComplete: (lessonId: string) => void;
   showKeyboard: boolean;
   onToggleKeyboard: () => void;
+  fontSize: number;
+  onFontSizeChange: (size: number) => void;
 };
 
-export function TypingTrainer({ lesson, locked, onComplete, showKeyboard, onToggleKeyboard }: Props) {
+export function TypingTrainer({
+  lesson,
+  locked,
+  onComplete,
+  showKeyboard,
+  onToggleKeyboard,
+  fontSize,
+  onFontSizeChange,
+}: Props) {
   const [text, setText] = useState(() => generateDrillText(lesson.keys));
   const [typedIndex, setTypedIndex] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
@@ -118,11 +129,23 @@ export function TypingTrainer({ lesson, locked, onComplete, showKeyboard, onTogg
             <CardTitle>{lesson.title}</CardTitle>
             <CardDescription>{lesson.hint}</CardDescription>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="flex gap-3 text-sm text-muted-foreground">
               <span>{stats.wpm} wpm</span>
               <span>{stats.accuracy}% acc</span>
               <span>{errorCount} errors</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">A</span>
+              <Slider
+                value={[fontSize]}
+                min={16}
+                max={36}
+                step={2}
+                onValueChange={([v]) => onFontSizeChange(v)}
+                className="w-24"
+              />
+              <span className="text-base text-muted-foreground">A</span>
             </div>
             <Button size="icon-sm" variant="outline" aria-label="Toggle on-screen keyboard" onClick={onToggleKeyboard}>
               <Keyboard />
@@ -137,7 +160,8 @@ export function TypingTrainer({ lesson, locked, onComplete, showKeyboard, onTogg
           ref={containerRef}
           tabIndex={0}
           onKeyDown={handleKeyDown}
-          className="break-all rounded-lg border bg-muted/30 p-5 font-mono text-xl leading-relaxed tracking-wide outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50"
+          style={{ fontSize: `${fontSize}px` }}
+          className="break-all rounded-lg border bg-muted/30 p-5 font-mono leading-relaxed tracking-wide outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           {text.split("").map((char, i) => {
             let cls = "text-muted-foreground";

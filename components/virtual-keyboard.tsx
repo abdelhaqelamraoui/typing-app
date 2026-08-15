@@ -89,16 +89,15 @@ const BOTTOM_LETTER_ROW: KeyDef[] = [
 const KEY_BASE =
   "flex min-w-0 select-none items-center justify-center gap-0.5 rounded-[7px] border font-sans transition-all duration-150";
 const KEY_INACTIVE = "border-border bg-background text-foreground shadow-sm";
-const KEY_ACTIVE =
-  "scale-[1.04] border-emerald-400 bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.55)] dark:bg-emerald-400 dark:text-neutral-900";
+const KEY_ACTIVE = "scale-[1.04] border-emerald-400 bg-emerald-500 text-white dark:bg-emerald-400 dark:text-neutral-900";
 
 function Key({ def, active }: { def: KeyDef; active: boolean }) {
   return (
     <div
       style={{ flexGrow: def.weight ?? 1, flexBasis: 0 }}
-      className={`${KEY_BASE} h-9 text-[11px] ${active ? KEY_ACTIVE : KEY_INACTIVE}`}
+      className={`${KEY_BASE} h-9 text-sm font-medium ${active ? KEY_ACTIVE : KEY_INACTIVE}`}
     >
-      {def.sub && <span className="text-[9px] leading-none opacity-70">{def.sub}</span>}
+      {def.sub && <span className="text-[10px] leading-none opacity-70">{def.sub}</span>}
       <span className="leading-none">{def.label}</span>
     </div>
   );
@@ -118,7 +117,7 @@ function ModKey({ label, weight = 1 }: { label: string; weight?: number }) {
   return (
     <div
       style={{ flexGrow: weight, flexBasis: 0 }}
-      className={`${KEY_BASE} h-9 text-[10px] ${KEY_INACTIVE}`}
+      className={`${KEY_BASE} h-9 text-xs font-medium ${KEY_INACTIVE}`}
     >
       {label}
     </div>
@@ -140,7 +139,7 @@ export function VirtualKeyboard({ nextKey }: Props) {
             <div
               key={i}
               style={{ flexGrow: 1, flexBasis: 0 }}
-              className="flex h-6 min-w-0 select-none items-center justify-center rounded-[6px] border border-border bg-background/60 font-sans text-[9px] text-muted-foreground"
+              className="flex h-7 min-w-0 select-none items-center justify-center rounded-[6px] border border-border bg-background/60 font-sans text-[11px] font-medium text-muted-foreground"
             >
               {k.label}
             </div>
@@ -163,18 +162,18 @@ export function VirtualKeyboard({ nextKey }: Props) {
           />
           <ModKey label="⌘ command" weight={1.4} />
           <ModKey label="option" weight={1.15} />
-          <div style={{ flexGrow: 1, flexBasis: 0 }} className={`${KEY_BASE} h-9 text-xs ${KEY_INACTIVE}`}>
+          <div style={{ flexGrow: 1, flexBasis: 0 }} className={`${KEY_BASE} h-9 text-sm ${KEY_INACTIVE}`}>
             ←
           </div>
           <div style={{ flexGrow: 1, flexBasis: 0 }} className="flex h-9 flex-col gap-0.5">
-            <div className={`flex h-1/2 items-center justify-center rounded-t-[7px] border text-[9px] ${KEY_INACTIVE}`}>
+            <div className={`flex h-1/2 items-center justify-center rounded-t-[7px] border text-[11px] ${KEY_INACTIVE}`}>
               ↑
             </div>
-            <div className={`flex h-1/2 items-center justify-center rounded-b-[7px] border text-[9px] ${KEY_INACTIVE}`}>
+            <div className={`flex h-1/2 items-center justify-center rounded-b-[7px] border text-[11px] ${KEY_INACTIVE}`}>
               ↓
             </div>
           </div>
-          <div style={{ flexGrow: 1, flexBasis: 0 }} className={`${KEY_BASE} h-9 text-xs ${KEY_INACTIVE}`}>
+          <div style={{ flexGrow: 1, flexBasis: 0 }} className={`${KEY_BASE} h-9 text-sm ${KEY_INACTIVE}`}>
             →
           </div>
         </div>
