@@ -73,27 +73,41 @@ class TypewriterSound {
     this.burst(ctx, { freq: 190, noiseGain: 0.6, toneGain: 0.12, duration: 0.045, filterFreq: 2600, filterQ: 1.4 });
   }
 
-  /** The space bar — same sound as any other key. */
+  /** The space bar - same sound as any other key. */
   space() {
     this.key();
   }
 
-  /** A missed keystroke. */
+  /** A missed keystroke - a soft, muted thud rather than a harsh buzzer. */
   error() {
     if (this.muted) return;
     const ctx = this.ensureCtx();
     if (!ctx) return;
     const now = ctx.currentTime;
+
     const osc = ctx.createOscillator();
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(160, now);
-    osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(210, now);
+    osc.frequency.exponentialRampToValueAtTime(95, now + 0.12);
     const env = ctx.createGain();
-    env.gain.setValueAtTime(0.18, now);
-    env.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+    env.gain.setValueAtTime(0.001, now);
+    env.gain.linearRampToValueAtTime(0.22, now + 0.008);
+    env.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
     osc.connect(env).connect(ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.16);
+    osc.stop(now + 0.14);
+
+    const src = ctx.createBufferSource();
+    src.buffer = this.getNoiseBuffer(ctx);
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 450;
+    const noiseEnv = ctx.createGain();
+    noiseEnv.gain.setValueAtTime(0.12, now);
+    noiseEnv.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+    src.connect(filter).connect(noiseEnv).connect(ctx.destination);
+    src.start(now);
+    src.stop(now + 0.07);
   }
 
   /** Carriage-return bell for finishing a lesson. */
@@ -117,6 +131,29 @@ class TypewriterSound {
       osc.connect(env).connect(ctx.destination);
       osc.start(start);
       osc.stop(start + 0.6);
+    });
+  }
+
+  /** A lesson finished with zero errors - a bright ascending four-note chime. */
+  success() {
+    if (this.muted) return;
+    const ctx = this.ensureCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+    notes.forEach((freq, i) => {
+      const start = now + i * 0.09;
+      const osc = ctx.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0, start);
+      env.gain.linearRampToValueAtTime(0.22, start + 0.015);
+      env.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
+      osc.connect(env).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.4);
     });
   }
 }

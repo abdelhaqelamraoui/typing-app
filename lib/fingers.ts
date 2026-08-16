@@ -137,7 +137,7 @@ export const HOME_KEY_FOR_FINGER: Record<Finger, string> = {
 export function reachDescription(key: string): string {
   const offset = KEY_ROW_OFFSET[key] ?? 0;
   if (key === " ") return "thumb taps the space bar";
-  if (offset === 0) return "home key — no reach needed";
+  if (offset === 0) return "home key - no reach needed";
   if (offset === -1) return "reach up one row";
   if (offset === -2) return "reach up two rows";
   if (offset === 1) return "reach down one row";

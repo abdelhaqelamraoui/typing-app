@@ -103,11 +103,23 @@ function Key({ def, active }: { def: KeyDef; active: boolean }) {
   );
 }
 
-function Row({ keys, nextKey }: { keys: KeyDef[]; nextKey: string | null }) {
+function Row({
+  keys,
+  nextKey,
+  activeKeys,
+}: {
+  keys: KeyDef[];
+  nextKey: string | null;
+  activeKeys?: Set<string>;
+}) {
   return (
     <div className="flex w-full gap-1">
       {keys.map((k, i) => (
-        <Key key={`${k.label}-${i}`} def={k} active={!!k.char && k.char === nextKey} />
+        <Key
+          key={`${k.label}-${i}`}
+          def={k}
+          active={!!k.char && (k.char === nextKey || !!activeKeys?.has(k.char))}
+        />
       ))}
     </div>
   );
@@ -126,10 +138,11 @@ function ModKey({ label, weight = 1 }: { label: string; weight?: number }) {
 
 type Props = {
   nextKey: string | null;
+  activeKeys?: Set<string>;
 };
 
-export function VirtualKeyboard({ nextKey }: Props) {
-  const spaceActive = nextKey === " ";
+export function VirtualKeyboard({ nextKey, activeKeys }: Props) {
+  const spaceActive = nextKey === " " || !!activeKeys?.has(" ");
 
   return (
     <div className="w-full rounded-2xl border bg-muted/40 p-3 shadow-inner sm:p-4">
@@ -146,10 +159,10 @@ export function VirtualKeyboard({ nextKey }: Props) {
           ))}
         </div>
 
-        <Row keys={NUMBER_ROW} nextKey={nextKey} />
-        <Row keys={QWERTY_ROW} nextKey={nextKey} />
-        <Row keys={HOME_ROW} nextKey={nextKey} />
-        <Row keys={BOTTOM_LETTER_ROW} nextKey={nextKey} />
+        <Row keys={NUMBER_ROW} nextKey={nextKey} activeKeys={activeKeys} />
+        <Row keys={QWERTY_ROW} nextKey={nextKey} activeKeys={activeKeys} />
+        <Row keys={HOME_ROW} nextKey={nextKey} activeKeys={activeKeys} />
+        <Row keys={BOTTOM_LETTER_ROW} nextKey={nextKey} activeKeys={activeKeys} />
 
         <div className="flex w-full gap-1">
           <ModKey label="fn" />

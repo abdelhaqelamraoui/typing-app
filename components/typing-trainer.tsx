@@ -90,10 +90,12 @@ export function TypingTrainer({
 
         if (nextIndex === text.length) {
           setFinished(true);
-          typewriterSound.bell();
           if (errorCountRef.current === 0) {
+            typewriterSound.success();
             onComplete(lesson.id);
             onPerfectFinish();
+          } else {
+            typewriterSound.bell();
           }
         }
       } else {
@@ -209,17 +211,17 @@ export function TypingTrainer({
         </div>
 
         {!finished && typedIndex === 0 && (
-          <p className="text-sm text-muted-foreground">Just start typing — no need to click anything.</p>
+          <p className="text-sm text-muted-foreground">Just start typing - no need to click anything.</p>
         )}
 
         {finished && (
           <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
             <div className="flex items-center gap-2">
               {perfect ? (
-                <Badge>Perfect run — next lesson unlocked</Badge>
+                <Badge>Perfect run - next lesson unlocked</Badge>
               ) : (
                 <Badge variant="destructive">
-                  {errorCount} error{errorCount === 1 ? "" : "s"} — type with zero errors to unlock the next lesson.
+                  {errorCount} error{errorCount === 1 ? "" : "s"} - type with zero errors to unlock the next lesson.
                   Press Enter to retry.
                 </Badge>
               )}
