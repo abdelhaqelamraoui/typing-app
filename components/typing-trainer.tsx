@@ -26,6 +26,7 @@ type Props = {
 };
 
 const INTERACTIVE_SELECTOR = 'button, a[href], input, textarea, select, [role="slider"]';
+const TEXT_INPUT_SELECTOR = 'input, textarea, select, [role="slider"]';
 
 export function TypingTrainer({
   lesson,
@@ -75,7 +76,8 @@ export function TypingTrainer({
       if (locked || finished || !listening) return;
       if (e.key.length !== 1) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.target instanceof HTMLElement && e.target.closest(INTERACTIVE_SELECTOR)) return;
+      if (e.target instanceof HTMLElement && e.target.closest(TEXT_INPUT_SELECTOR)) return;
+      if (e.target instanceof HTMLElement) e.target.blur();
       e.preventDefault();
 
       if (startTime === null) setStartTime(Date.now());
