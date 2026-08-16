@@ -9,7 +9,9 @@ import { usePersistentState } from "@/hooks/use-persistent-state";
 import { LessonList } from "@/components/lesson-list";
 import { TypingTrainer } from "@/components/typing-trainer";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SoundToggle } from "@/components/sound-toggle";
 import { HandGuideModal } from "@/components/hand-guide-modal";
+import { CongratsModal } from "@/components/congrats-modal";
 import { Progress } from "@/components/ui/progress";
 
 export function TypeTrainerApp() {
@@ -17,15 +19,24 @@ export function TypeTrainerApp() {
   const [showKeyboard, setShowKeyboard] = usePersistentState("typing-app:show-keyboard", true);
   const [fontSize, setFontSize] = usePersistentState("typing-app:font-size", 20);
   const [handGuideOpen, setHandGuideOpen] = useState(true);
+  const [congratsOpen, setCongratsOpen] = useState(false);
   const { completed, complete } = useLessonProgress();
 
   const selectedIndex = LESSONS.findIndex((l) => l.id === selectedId);
   const lesson = LESSONS[selectedIndex];
+  const nextLesson = LESSONS[selectedIndex + 1] ?? null;
   const isLocked = selectedIndex > 0 && !completed.has(LESSONS[selectedIndex - 1].id);
+  const isModalOpen = (handGuideOpen && !isLocked) || congratsOpen;
 
   const handleSelectLesson = (id: string) => {
     setSelectedId(id);
     setHandGuideOpen(true);
+  };
+
+  const handleNextLesson = () => {
+    if (!nextLesson) return;
+    setCongratsOpen(false);
+    handleSelectLesson(nextLesson.id);
   };
 
   const progressPct = useMemo(
@@ -50,6 +61,7 @@ export function TypeTrainerApp() {
             </div>
             <Progress value={progressPct} />
           </div>
+          <SoundToggle />
           <ThemeToggle />
         </div>
       </header>
@@ -69,7 +81,9 @@ export function TypeTrainerApp() {
             key={lesson.id}
             lesson={lesson}
             locked={isLocked}
+            listening={!isModalOpen}
             onComplete={complete}
+            onPerfectFinish={() => setCongratsOpen(true)}
             showKeyboard={showKeyboard}
             onToggleKeyboard={() => setShowKeyboard((v) => !v)}
             fontSize={fontSize}
@@ -80,6 +94,13 @@ export function TypeTrainerApp() {
       </div>
 
       <HandGuideModal lesson={lesson} open={handGuideOpen && !isLocked} onOpenChange={setHandGuideOpen} />
+      <CongratsModal
+        lesson={lesson}
+        nextLesson={nextLesson}
+        open={congratsOpen}
+        onOpenChange={setCongratsOpen}
+        onNextLesson={handleNextLesson}
+      />
     </div>
   );
 }

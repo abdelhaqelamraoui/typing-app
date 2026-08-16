@@ -15,7 +15,9 @@ import { VirtualKeyboard } from "@/components/virtual-keyboard";
 type Props = {
   lesson: Lesson;
   locked: boolean;
+  listening: boolean;
   onComplete: (lessonId: string) => void;
+  onPerfectFinish: () => void;
   showKeyboard: boolean;
   onToggleKeyboard: () => void;
   fontSize: number;
@@ -23,10 +25,14 @@ type Props = {
   onShowHandGuide: () => void;
 };
 
+const INTERACTIVE_SELECTOR = 'button, a[href], input, textarea, select, [role="slider"]';
+
 export function TypingTrainer({
   lesson,
   locked,
+  listening,
   onComplete,
+  onPerfectFinish,
   showKeyboard,
   onToggleKeyboard,
   fontSize,
@@ -58,19 +64,17 @@ export function TypingTrainer({
   }, [lesson]);
 
   useEffect(() => {
-    if (!locked) containerRef.current?.focus();
-  }, [locked, lesson]);
-
-  useEffect(() => {
     if (!startTime || finished) return;
     const id = setInterval(() => setElapsedMs(Date.now() - startTime), 200);
     return () => clearInterval(id);
   }, [startTime, finished]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLDivElement>) => {
-      if (locked || finished) return;
+  const handleKey = useCallback(
+    (e: KeyboardEvent) => {
+      if (locked || finished || !listening) return;
       if (e.key.length !== 1) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.target instanceof HTMLElement && e.target.closest(INTERACTIVE_SELECTOR)) return;
       e.preventDefault();
 
       if (startTime === null) setStartTime(Date.now());
@@ -87,7 +91,10 @@ export function TypingTrainer({
         if (nextIndex === text.length) {
           setFinished(true);
           typewriterSound.bell();
-          if (errorCountRef.current === 0) onComplete(lesson.id);
+          if (errorCountRef.current === 0) {
+            onComplete(lesson.id);
+            onPerfectFinish();
+          }
         }
       } else {
         typewriterSound.error();
@@ -98,8 +105,28 @@ export function TypingTrainer({
         flashTimeout.current = setTimeout(() => setFlash(false), 300);
       }
     },
-    [locked, finished, startTime, text, typedIndex, onComplete, lesson.id]
+    [locked, finished, listening, startTime, text, typedIndex, onComplete, onPerfectFinish, lesson.id]
   );
+
+  useEffect(() => {
+    if (locked || finished || !listening) return;
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [locked, finished, listening, handleKey]);
+
+  const perfect = finished && errorCount === 0;
+
+  useEffect(() => {
+    if (locked || !finished || perfect || !listening) return;
+    const handleRetryKey = (e: KeyboardEvent) => {
+      if (e.key !== "Enter") return;
+      if (e.target instanceof HTMLElement && e.target.closest(INTERACTIVE_SELECTOR)) return;
+      e.preventDefault();
+      reset();
+    };
+    window.addEventListener("keydown", handleRetryKey);
+    return () => window.removeEventListener("keydown", handleRetryKey);
+  }, [locked, finished, perfect, listening, reset]);
 
   const stats = useMemo(() => {
     const minutes = elapsedMs / 60000;
@@ -109,7 +136,6 @@ export function TypingTrainer({
   }, [elapsedMs, typedIndex, keystrokes, errorCount]);
 
   const progressPct = Math.round((typedIndex / text.length) * 100);
-  const perfect = finished && errorCount === 0;
 
   if (locked) {
     return (
@@ -163,10 +189,8 @@ export function TypingTrainer({
 
         <div
           ref={containerRef}
-          tabIndex={0}
-          onKeyDown={handleKeyDown}
           style={{ fontSize: `${fontSize}px` }}
-          className="break-all rounded-lg border bg-muted/30 p-5 font-mono leading-relaxed tracking-wide outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="break-all rounded-lg border bg-muted/30 p-5 font-mono leading-relaxed tracking-wide transition-colors"
         >
           {text.split("").map((char, i) => {
             let cls = "text-muted-foreground";
@@ -184,8 +208,8 @@ export function TypingTrainer({
           })}
         </div>
 
-        {!finished && (
-          <p className="text-sm text-muted-foreground">Click the box above and start typing.</p>
+        {!finished && typedIndex === 0 && (
+          <p className="text-sm text-muted-foreground">Just start typing — no need to click anything.</p>
         )}
 
         {finished && (
@@ -195,7 +219,8 @@ export function TypingTrainer({
                 <Badge>Perfect run — next lesson unlocked</Badge>
               ) : (
                 <Badge variant="destructive">
-                  {errorCount} error{errorCount === 1 ? "" : "s"} — type with zero errors to unlock the next lesson
+                  {errorCount} error{errorCount === 1 ? "" : "s"} — type with zero errors to unlock the next lesson.
+                  Press Enter to retry.
                 </Badge>
               )}
             </div>

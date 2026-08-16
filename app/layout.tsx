@@ -16,6 +16,10 @@ const geistMono = Geist_Mono({
 const description =
   "A progressive touch-typing trainer. Practice keyboard-row lessons with a realistic on-screen keyboard and mechanical keystroke sounds — type each lesson with zero errors to unlock the next.";
 
+// Next doesn't prefix metadata icon hrefs with `basePath` on its own, so this
+// mirrors the same GitHub Pages base path computed in next.config.ts.
+const basePath = process.env.GITHUB_ACTIONS === "true" ? "/typing-app" : "";
+
 export const metadata: Metadata = {
   title: {
     default: "Type Trainer — Learn Touch Typing",
@@ -36,6 +40,10 @@ export const metadata: Metadata = {
   authors: [{ name: "Type Trainer" }],
   creator: "Type Trainer",
   formatDetection: { telephone: false },
+  icons: {
+    icon: `${basePath}/icon.png`,
+    apple: `${basePath}/apple-icon.png`,
+  },
   openGraph: {
     type: "website",
     title: "Type Trainer — Learn Touch Typing",

@@ -10,6 +10,11 @@ type BurstOptions = {
 class TypewriterSound {
   private ctx: AudioContext | null = null;
   private noiseBuffer: AudioBuffer | null = null;
+  private muted = false;
+
+  setMuted(muted: boolean) {
+    this.muted = muted;
+  }
 
   private ensureCtx(): AudioContext | null {
     if (typeof window === "undefined") return null;
@@ -62,20 +67,20 @@ class TypewriterSound {
 
   /** A single key strike. */
   key() {
+    if (this.muted) return;
     const ctx = this.ensureCtx();
     if (!ctx) return;
     this.burst(ctx, { freq: 190, noiseGain: 0.6, toneGain: 0.12, duration: 0.045, filterFreq: 2600, filterQ: 1.4 });
   }
 
-  /** The space bar — lower and a touch longer. */
+  /** The space bar — same sound as any other key. */
   space() {
-    const ctx = this.ensureCtx();
-    if (!ctx) return;
-    this.burst(ctx, { freq: 95, noiseGain: 0.7, toneGain: 0.18, duration: 0.09, filterFreq: 1100, filterQ: 1 });
+    this.key();
   }
 
   /** A missed keystroke. */
   error() {
+    if (this.muted) return;
     const ctx = this.ensureCtx();
     if (!ctx) return;
     const now = ctx.currentTime;
@@ -93,6 +98,7 @@ class TypewriterSound {
 
   /** Carriage-return bell for finishing a lesson. */
   bell() {
+    if (this.muted) return;
     const ctx = this.ensureCtx();
     if (!ctx) return;
     const now = ctx.currentTime;
