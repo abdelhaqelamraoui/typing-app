@@ -26,6 +26,15 @@ function getServerSnapshot() {
   return "[]";
 }
 
+/** Synchronous read for lazy useState initializers (this app has no server-rendered routes). */
+export function getCompletedLessons(): Set<string> {
+  try {
+    return new Set(JSON.parse(readRaw()) as string[]);
+  } catch {
+    return new Set<string>();
+  }
+}
+
 export function useLessonProgress() {
   const raw = useSyncExternalStore(subscribe, readRaw, getServerSnapshot);
   const completed = useMemo(() => {

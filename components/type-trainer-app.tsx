@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Keyboard } from "lucide-react";
 
 import { LESSONS } from "@/lib/lessons";
-import { useLessonProgress } from "@/hooks/use-lesson-progress";
+import { getCompletedLessons, useLessonProgress } from "@/hooks/use-lesson-progress";
 import { usePersistentState } from "@/hooks/use-persistent-state";
 import { LessonList } from "@/components/lesson-list";
 import { TypingTrainer } from "@/components/typing-trainer";
@@ -14,8 +14,14 @@ import { HandGuideModal } from "@/components/hand-guide-modal";
 import { CongratsModal } from "@/components/congrats-modal";
 import { Progress } from "@/components/ui/progress";
 
+function initialLessonId(): string {
+  const completed = getCompletedLessons();
+  const firstIncomplete = LESSONS.find((l) => !completed.has(l.id));
+  return firstIncomplete ? firstIncomplete.id : LESSONS[LESSONS.length - 1].id;
+}
+
 export function TypeTrainerApp() {
-  const [selectedId, setSelectedId] = useState(LESSONS[0].id);
+  const [selectedId, setSelectedId] = useState(initialLessonId);
   const [showKeyboard, setShowKeyboard] = usePersistentState("typing-app:show-keyboard", true);
   const [fontSize, setFontSize] = usePersistentState("typing-app:font-size", 20);
   const [handGuideOpen, setHandGuideOpen] = useState(true);
