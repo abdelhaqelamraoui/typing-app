@@ -61,6 +61,7 @@ export function TypingTrainer({
     setFinished(false);
     setElapsedMs(0);
     errorCountRef.current = 0;
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
   }, [lesson]);
 
   useEffect(() => {
