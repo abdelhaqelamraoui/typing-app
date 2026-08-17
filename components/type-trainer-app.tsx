@@ -4,29 +4,32 @@ import { useMemo, useState } from "react";
 import { Keyboard } from "lucide-react";
 
 import { LESSONS } from "@/lib/lessons";
+import { LanguageCode } from "@/lib/languages";
 import { getCompletedLessons, useLessonProgress } from "@/hooks/use-lesson-progress";
 import { usePersistentState } from "@/hooks/use-persistent-state";
 import { LessonList } from "@/components/lesson-list";
 import { TypingTrainer } from "@/components/typing-trainer";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SoundToggle } from "@/components/sound-toggle";
+import { LanguageSelect } from "@/components/language-select";
 import { HandGuideModal } from "@/components/hand-guide-modal";
 import { CongratsModal } from "@/components/congrats-modal";
 import { Progress } from "@/components/ui/progress";
 
-function initialLessonId(): string {
-  const completed = getCompletedLessons();
+function initialLessonId(language: LanguageCode): string {
+  const completed = getCompletedLessons(language);
   const firstIncomplete = LESSONS.find((l) => !completed.has(l.id));
   return firstIncomplete ? firstIncomplete.id : LESSONS[LESSONS.length - 1].id;
 }
 
 export function TypeTrainerApp() {
-  const [selectedId, setSelectedId] = useState(initialLessonId);
+  const [language, setLanguage] = usePersistentState<LanguageCode>("typing-app:language", "en");
+  const [selectedId, setSelectedId] = useState(() => initialLessonId(language));
   const [showKeyboard, setShowKeyboard] = usePersistentState("typing-app:show-keyboard", true);
   const [fontSize, setFontSize] = usePersistentState("typing-app:font-size", 20);
   const [handGuideOpen, setHandGuideOpen] = useState(true);
   const [congratsOpen, setCongratsOpen] = useState(false);
-  const { completed, complete } = useLessonProgress();
+  const { completed, complete } = useLessonProgress(language);
 
   const selectedIndex = LESSONS.findIndex((l) => l.id === selectedId);
   const lesson = LESSONS[selectedIndex];
@@ -36,6 +39,12 @@ export function TypeTrainerApp() {
 
   const handleSelectLesson = (id: string) => {
     setSelectedId(id);
+    setHandGuideOpen(true);
+  };
+
+  const handleLanguageChange = (next: LanguageCode) => {
+    setLanguage(next);
+    setSelectedId(initialLessonId(next));
     setHandGuideOpen(true);
   };
 
@@ -67,6 +76,7 @@ export function TypeTrainerApp() {
             </div>
             <Progress value={progressPct} />
           </div>
+          <LanguageSelect value={language} onChange={handleLanguageChange} />
           <SoundToggle />
           <ThemeToggle />
         </div>
@@ -79,12 +89,13 @@ export function TypeTrainerApp() {
             selectedId={selectedId}
             completed={completed}
             onSelect={handleSelectLesson}
+            language={language}
           />
         </aside>
 
         <main>
           <TypingTrainer
-            key={lesson.id}
+            key={`${lesson.id}-${language}`}
             lesson={lesson}
             locked={isLocked}
             listening={!isModalOpen}
@@ -95,17 +106,24 @@ export function TypeTrainerApp() {
             fontSize={fontSize}
             onFontSizeChange={setFontSize}
             onShowHandGuide={() => setHandGuideOpen(true)}
+            language={language}
           />
         </main>
       </div>
 
-      <HandGuideModal lesson={lesson} open={handGuideOpen && !isLocked} onOpenChange={setHandGuideOpen} />
+      <HandGuideModal
+        lesson={lesson}
+        open={handGuideOpen && !isLocked}
+        onOpenChange={setHandGuideOpen}
+        language={language}
+      />
       <CongratsModal
         lesson={lesson}
         nextLesson={nextLesson}
         open={congratsOpen}
         onOpenChange={setCongratsOpen}
         onNextLesson={handleNextLesson}
+        language={language}
       />
     </div>
   );

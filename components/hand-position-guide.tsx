@@ -4,6 +4,7 @@ import { useMemo } from "react";
 
 import { Lesson } from "@/lib/lessons";
 import { Finger, FINGER_COLOR, KEY_FINGER, KEY_ROW_OFFSET } from "@/lib/fingers";
+import { LanguageCode, glyphFor } from "@/lib/languages";
 import { VirtualKeyboard } from "@/components/virtual-keyboard";
 
 // Column weights below mirror the HOME_ROW / bottom modifier row weights in
@@ -37,12 +38,16 @@ function bestReach(lesson: Lesson, finger: Finger): { key: string; offset: numbe
   return best;
 }
 
-function keyLabel(key: string) {
+function keyLabel(key: string, language: LanguageCode) {
+  if (language === "ar") return glyphFor(language, key);
   return /[a-z]/.test(key) ? key.toUpperCase() : key;
 }
 
-export function HandPositionGuide({ lesson }: { lesson: Lesson }) {
-  const activeKeys = useMemo(() => new Set(lesson.keys), [lesson]);
+export function HandPositionGuide({ lesson, language = "en" }: { lesson: Lesson; language?: LanguageCode }) {
+  const activeKeys = useMemo(
+    () => new Set(lesson.keys.map((key) => glyphFor(language, key))),
+    [lesson, language]
+  );
   const activeFingers = useMemo(() => {
     const set = new Set<Finger>();
     for (const key of lesson.keys) {
@@ -55,7 +60,7 @@ export function HandPositionGuide({ lesson }: { lesson: Lesson }) {
 
   return (
     <div className="w-full">
-      <VirtualKeyboard nextKey={null} activeKeys={activeKeys} />
+      <VirtualKeyboard nextKey={null} activeKeys={activeKeys} language={language} />
 
       <div className="rounded-b-2xl border border-t-0 bg-muted/40 p-3 pt-2 shadow-inner sm:p-4 sm:pt-2">
         <div className="flex w-full gap-1">
@@ -71,7 +76,7 @@ export function HandPositionGuide({ lesson }: { lesson: Lesson }) {
                 {reach && (
                   <span>
                     {reach.offset < 0 ? "↑" : "↓"}
-                    {keyLabel(reach.key)}
+                    {keyLabel(reach.key, language)}
                   </span>
                 )}
               </div>

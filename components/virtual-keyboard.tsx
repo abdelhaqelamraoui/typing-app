@@ -1,3 +1,5 @@
+import { LanguageCode, glyphFor } from "@/lib/languages";
+
 type KeyDef = {
   label: string;
   char?: string;
@@ -91,14 +93,15 @@ const KEY_BASE =
 const KEY_INACTIVE = "border-border bg-background text-foreground shadow-sm";
 const KEY_ACTIVE = "scale-[1.04] border-emerald-400 bg-emerald-500 text-white dark:bg-emerald-400 dark:text-neutral-900";
 
-function Key({ def, active }: { def: KeyDef; active: boolean }) {
+function Key({ def, active, language }: { def: KeyDef; active: boolean; language: LanguageCode }) {
+  const label = def.char && language === "ar" ? glyphFor(language, def.char) : def.label;
   return (
     <div
       style={{ flexGrow: def.weight ?? 1, flexBasis: 0 }}
       className={`${KEY_BASE} h-9 text-sm font-medium ${active ? KEY_ACTIVE : KEY_INACTIVE}`}
     >
       {def.sub && <span className="text-[10px] leading-none opacity-70">{def.sub}</span>}
-      <span className="leading-none">{def.label}</span>
+      <span className="leading-none">{label}</span>
     </div>
   );
 }
@@ -107,20 +110,26 @@ function Row({
   keys,
   nextKey,
   activeKeys,
+  language,
 }: {
   keys: KeyDef[];
   nextKey: string | null;
   activeKeys?: Set<string>;
+  language: LanguageCode;
 }) {
   return (
     <div className="flex w-full gap-1">
-      {keys.map((k, i) => (
-        <Key
-          key={`${k.label}-${i}`}
-          def={k}
-          active={!!k.char && (k.char === nextKey || !!activeKeys?.has(k.char))}
-        />
-      ))}
+      {keys.map((k, i) => {
+        const glyph = k.char ? glyphFor(language, k.char) : undefined;
+        return (
+          <Key
+            key={`${k.label}-${i}`}
+            def={k}
+            language={language}
+            active={!!glyph && (glyph === nextKey || !!activeKeys?.has(glyph))}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -139,9 +148,10 @@ function ModKey({ label, weight = 1 }: { label: string; weight?: number }) {
 type Props = {
   nextKey: string | null;
   activeKeys?: Set<string>;
+  language?: LanguageCode;
 };
 
-export function VirtualKeyboard({ nextKey, activeKeys }: Props) {
+export function VirtualKeyboard({ nextKey, activeKeys, language = "en" }: Props) {
   const spaceActive = nextKey === " " || !!activeKeys?.has(" ");
 
   return (
@@ -159,10 +169,10 @@ export function VirtualKeyboard({ nextKey, activeKeys }: Props) {
           ))}
         </div>
 
-        <Row keys={NUMBER_ROW} nextKey={nextKey} activeKeys={activeKeys} />
-        <Row keys={QWERTY_ROW} nextKey={nextKey} activeKeys={activeKeys} />
-        <Row keys={HOME_ROW} nextKey={nextKey} activeKeys={activeKeys} />
-        <Row keys={BOTTOM_LETTER_ROW} nextKey={nextKey} activeKeys={activeKeys} />
+        <Row keys={NUMBER_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} />
+        <Row keys={QWERTY_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} />
+        <Row keys={HOME_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} />
+        <Row keys={BOTTOM_LETTER_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} />
 
         <div className="flex w-full gap-1">
           <ModKey label="fn" />

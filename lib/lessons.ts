@@ -1,3 +1,5 @@
+import { LanguageCode, glyphFor } from "@/lib/languages";
+
 export type Lesson = {
   id: string;
   title: string;
@@ -62,12 +64,12 @@ function pick<T>(arr: T[]): T {
 }
 
 /** Generates a long drill of pseudo-words built only from the lesson's own keys. */
-export function generateDrillText(keys: string[]): string {
+export function generateDrillText(keys: string[], language: LanguageCode = "en"): string {
   const words: string[] = [];
   for (let w = 0; w < WORD_COUNT; w++) {
     const len = MIN_WORD_LEN + Math.floor(Math.random() * (MAX_WORD_LEN - MIN_WORD_LEN + 1));
     let word = "";
-    for (let i = 0; i < len; i++) word += pick(keys);
+    for (let i = 0; i < len; i++) word += glyphFor(language, pick(keys));
     words.push(word);
   }
   return words.join(" ");

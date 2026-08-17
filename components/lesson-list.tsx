@@ -3,6 +3,7 @@
 import { Check, Lock } from "lucide-react";
 
 import { Lesson } from "@/lib/lessons";
+import { LanguageCode, lessonTitle } from "@/lib/languages";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -11,9 +12,10 @@ type Props = {
   selectedId: string;
   completed: Set<string>;
   onSelect: (id: string) => void;
+  language?: LanguageCode;
 };
 
-export function LessonList({ lessons, selectedId, completed, onSelect }: Props) {
+export function LessonList({ lessons, selectedId, completed, onSelect, language = "en" }: Props) {
   return (
     <nav className="flex flex-col gap-1">
       {lessons.map((lesson, i) => {
@@ -33,7 +35,7 @@ export function LessonList({ lessons, selectedId, completed, onSelect }: Props) 
           >
             <span className="flex items-center gap-2">
               <span className="w-5 text-xs text-muted-foreground">{i + 1}</span>
-              <span>{lesson.title}</span>
+              <span>{lessonTitle(lesson.id, lesson.title, language)}</span>
             </span>
             {isDone ? (
               <Badge className="bg-emerald-600 text-white dark:bg-emerald-500">

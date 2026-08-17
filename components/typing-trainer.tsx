@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Hand, Keyboard, Lock, RotateCcw } from "lucide-react";
 
 import { Lesson, generateDrillText } from "@/lib/lessons";
+import { LAM_ALEF_LIGATURE, LanguageCode, STRINGS, lessonHint, lessonTitle } from "@/lib/languages";
 import { typewriterSound } from "@/lib/typewriter-sound";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -23,6 +25,7 @@ type Props = {
   fontSize: number;
   onFontSizeChange: (size: number) => void;
   onShowHandGuide: () => void;
+  language: LanguageCode;
 };
 
 const INTERACTIVE_SELECTOR = 'button, a[href], input, textarea, select, [role="slider"]';
@@ -39,8 +42,10 @@ export function TypingTrainer({
   fontSize,
   onFontSizeChange,
   onShowHandGuide,
+  language,
 }: Props) {
-  const [text, setText] = useState(() => generateDrillText(lesson.keys));
+  const t = STRINGS[language];
+  const [text, setText] = useState(() => generateDrillText(lesson.keys, language));
   const [typedIndex, setTypedIndex] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
   const [keystrokes, setKeystrokes] = useState(0);
@@ -54,7 +59,7 @@ export function TypingTrainer({
   const errorCountRef = useRef(0);
 
   const reset = useCallback(() => {
-    setText(generateDrillText(lesson.keys));
+    setText(generateDrillText(lesson.keys, language));
     setTypedIndex(0);
     setErrorCount(0);
     setKeystrokes(0);
@@ -63,7 +68,7 @@ export function TypingTrainer({
     setElapsedMs(0);
     errorCountRef.current = 0;
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-  }, [lesson]);
+  }, [lesson, language]);
 
   useEffect(() => {
     if (!startTime || finished) return;
@@ -74,7 +79,7 @@ export function TypingTrainer({
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
       if (locked || finished || !listening) return;
-      if (e.key.length !== 1) return;
+      if (e.key.length !== 1 && e.key !== LAM_ALEF_LIGATURE) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.target instanceof HTMLElement && e.target.closest(TEXT_INPUT_SELECTOR)) return;
       if (e.target instanceof HTMLElement) e.target.blur();
@@ -83,12 +88,11 @@ export function TypingTrainer({
       if (startTime === null) setStartTime(Date.now());
       setKeystrokes((k) => k + 1);
 
-      const expected = text[typedIndex];
-      if (e.key === expected) {
-        if (expected === " ") typewriterSound.space();
+      if (text.startsWith(e.key, typedIndex)) {
+        if (e.key === " ") typewriterSound.space();
         else typewriterSound.key();
 
-        const nextIndex = typedIndex + 1;
+        const nextIndex = typedIndex + e.key.length;
         setTypedIndex(nextIndex);
 
         if (nextIndex === text.length) {
@@ -147,26 +151,38 @@ export function TypingTrainer({
       <Card className="flex min-h-80 items-center justify-center">
         <CardContent className="flex flex-col items-center gap-2 text-center text-muted-foreground">
           <Lock className="size-8" />
-          <p className="font-heading text-base text-foreground">Lesson locked</p>
-          <p className="text-sm">Finish the previous lesson with zero errors to unlock this one.</p>
+          <p className="font-heading text-base text-foreground">{t.lessonLocked}</p>
+          <p className="text-sm">{t.lessonLockedDesc}</p>
         </CardContent>
       </Card>
     );
   }
+
+  const nextGlyph = finished
+    ? null
+    : text.startsWith(LAM_ALEF_LIGATURE, typedIndex)
+      ? LAM_ALEF_LIGATURE
+      : (text[typedIndex] ?? null);
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle>{lesson.title}</CardTitle>
-            <CardDescription>{lesson.hint}</CardDescription>
+            <CardTitle>{lessonTitle(lesson.id, lesson.title, language)}</CardTitle>
+            <CardDescription>{lessonHint(lesson.id, lesson.hint, language)}</CardDescription>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex gap-3 text-sm text-muted-foreground">
-              <span>{stats.wpm} wpm</span>
-              <span>{stats.accuracy}% acc</span>
-              <span>{errorCount} errors</span>
+              <span>
+                {stats.wpm} {t.wpm}
+              </span>
+              <span>
+                {stats.accuracy}% {t.acc}
+              </span>
+              <span>
+                {errorCount} {t.errors}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">A</span>
@@ -194,8 +210,12 @@ export function TypingTrainer({
 
         <div
           ref={containerRef}
+          dir={language === "ar" ? "rtl" : "ltr"}
           style={{ fontSize: `${fontSize}px` }}
-          className="break-all rounded-lg border bg-muted/30 p-5 font-mono leading-relaxed tracking-wide transition-colors"
+          className={cn(
+            "break-all rounded-lg border bg-muted/30 p-5 leading-relaxed transition-colors",
+            language === "ar" ? "font-sans" : "font-mono tracking-wide"
+          )}
         >
           {text.split("").map((char, i) => {
             let cls = "text-muted-foreground";
@@ -213,25 +233,20 @@ export function TypingTrainer({
           })}
         </div>
 
-        {!finished && typedIndex === 0 && (
-          <p className="text-sm text-muted-foreground">Just start typing - no need to click anything.</p>
-        )}
+        {!finished && typedIndex === 0 && <p className="text-sm text-muted-foreground">{t.justStart}</p>}
 
         {finished && (
           <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
             <div className="flex items-center gap-2">
               {perfect ? (
-                <Badge>Perfect run - next lesson unlocked</Badge>
+                <Badge>{t.perfectRun}</Badge>
               ) : (
-                <Badge variant="destructive">
-                  {errorCount} error{errorCount === 1 ? "" : "s"} - type with zero errors to unlock the next lesson.
-                  Press Enter to retry.
-                </Badge>
+                <Badge variant="destructive">{t.errorsBadge(errorCount)}</Badge>
               )}
             </div>
             <Button size="sm" variant="outline" onClick={reset}>
               <RotateCcw />
-              Retry
+              {t.retry}
             </Button>
           </div>
         )}
@@ -240,12 +255,12 @@ export function TypingTrainer({
           <div>
             <Button size="sm" variant="ghost" onClick={reset}>
               <RotateCcw />
-              New drill
+              {t.newDrill}
             </Button>
           </div>
         )}
 
-        {showKeyboard && <VirtualKeyboard nextKey={finished ? null : text[typedIndex]} />}
+        {showKeyboard && <VirtualKeyboard nextKey={nextGlyph} language={language} />}
       </CardContent>
     </Card>
   );

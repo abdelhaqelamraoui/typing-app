@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { PartyPopper } from "lucide-react";
 
 import { Lesson } from "@/lib/lessons";
+import { LanguageCode, lessonTitle } from "@/lib/languages";
 import {
   Dialog,
   DialogContent,
@@ -20,10 +21,13 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onNextLesson: () => void;
+  language?: LanguageCode;
 };
 
-export function CongratsModal({ lesson, nextLesson, open, onOpenChange, onNextLesson }: Props) {
+export function CongratsModal({ lesson, nextLesson, open, onOpenChange, onNextLesson, language = "en" }: Props) {
   const nextButtonRef = useRef<HTMLButtonElement>(null);
+  const title = lessonTitle(lesson.id, lesson.title, language);
+  const nextTitle = nextLesson ? lessonTitle(nextLesson.id, nextLesson.title, language) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -42,8 +46,8 @@ export function CongratsModal({ lesson, nextLesson, open, onOpenChange, onNextLe
           <DialogTitle>Lesson complete!</DialogTitle>
           <DialogDescription>
             {nextLesson
-              ? `You typed "${lesson.title}" with zero errors. Ready for the next lesson?`
-              : `You typed "${lesson.title}" with zero errors. You've finished every lesson!`}
+              ? `You typed "${title}" with zero errors. Ready for the next lesson?`
+              : `You typed "${title}" with zero errors. You've finished every lesson!`}
           </DialogDescription>
         </DialogHeader>
 
@@ -54,7 +58,7 @@ export function CongratsModal({ lesson, nextLesson, open, onOpenChange, onNextLe
                 Stay here
               </Button>
               <Button ref={nextButtonRef} onClick={onNextLesson}>
-                Next lesson: {nextLesson.title}
+                Next lesson: {nextTitle}
               </Button>
             </>
           ) : (
