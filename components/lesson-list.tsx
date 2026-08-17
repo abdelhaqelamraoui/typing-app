@@ -35,7 +35,7 @@ export function LessonList({ lessons, selectedId, completed, onSelect, language 
           >
             <span className="flex items-center gap-2">
               <span className="w-5 text-xs text-muted-foreground">{i + 1}</span>
-              <span>{lessonTitle(lesson.id, lesson.title, language)}</span>
+              <span>{lessonTitle(lesson, language)}</span>
             </span>
             {isDone ? (
               <Badge className="bg-emerald-600 text-white dark:bg-emerald-500">

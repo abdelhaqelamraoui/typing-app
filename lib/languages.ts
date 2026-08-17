@@ -1,3 +1,5 @@
+import type { Lesson } from "@/lib/lessons";
+
 export type LanguageCode = "en" | "ar";
 
 export const LANGUAGES: { code: LanguageCode; label: string; nativeLabel: string }[] = [
@@ -87,25 +89,34 @@ export const LESSON_HINT_AR: Record<string, string> = {
   "w-o": "امتداد البنصر للأعلى",
   "q-p": "امتداد الخنصر للأعلى",
   "t-y": "امتداد السبابتين نحو الوسط",
-  "top-row": "كل مفاتيح الصف العلوي العشرة",
+  "top-row": "الصف الأوسط والصف العلوي معًا",
   "v-m": "امتداد السبابتين للأسفل",
   "c-comma": "امتداد الوسطى للأسفل",
   "x-period": "امتداد البنصر للأسفل",
   "z-slash": "امتداد الخنصر للأسفل",
   "b-n": "امتداد السبابتين نحو الوسط",
-  "bottom-row": "كل مفاتيح الصف السفلي العشرة",
+  "bottom-row": "كل حرف وعلامة ترقيم تعلمتها حتى الآن",
   numbers: "صف الأرقام",
-  "full-keyboard": "كل الحروف مجتمعة",
+  "full-keyboard": "كل ما تعلمته - الحروف وعلامات الترقيم والأرقام",
 };
 
-export function lessonTitle(id: string, fallback: string, language: LanguageCode): string {
-  if (language !== "ar") return fallback;
-  return LESSON_TITLE_AR[id] ?? fallback;
+/** Generic Arabic fallback for a lesson title when there's no explicit override above. */
+function fallbackTitleAr(lesson: Pick<Lesson, "id" | "keys">): string | null {
+  if (lesson.keys.length <= 2) return lesson.keys.map((key) => glyphFor("ar", key)).join(" و ");
+  if (lesson.id.startsWith("accum-")) return `مراجعة (${lesson.keys.length} مفاتيح)`;
+  return null;
 }
 
-export function lessonHint(id: string, fallback: string, language: LanguageCode): string {
-  if (language !== "ar") return fallback;
-  return LESSON_HINT_AR[id] ?? fallback;
+export function lessonTitle(lesson: Pick<Lesson, "id" | "title" | "keys">, language: LanguageCode): string {
+  if (language !== "ar") return lesson.title;
+  return LESSON_TITLE_AR[lesson.id] ?? fallbackTitleAr(lesson) ?? lesson.title;
+}
+
+export function lessonHint(lesson: Pick<Lesson, "id" | "hint">, language: LanguageCode): string {
+  if (language !== "ar") return lesson.hint;
+  if (LESSON_HINT_AR[lesson.id]) return LESSON_HINT_AR[lesson.id];
+  if (lesson.id.startsWith("accum-")) return "كل ما تعلمته حتى الآن، مجتمعًا";
+  return lesson.hint;
 }
 
 export const STRINGS: Record<

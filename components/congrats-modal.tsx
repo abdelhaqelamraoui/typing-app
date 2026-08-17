@@ -26,8 +26,8 @@ type Props = {
 
 export function CongratsModal({ lesson, nextLesson, open, onOpenChange, onNextLesson, language = "en" }: Props) {
   const nextButtonRef = useRef<HTMLButtonElement>(null);
-  const title = lessonTitle(lesson.id, lesson.title, language);
-  const nextTitle = nextLesson ? lessonTitle(nextLesson.id, nextLesson.title, language) : null;
+  const title = lessonTitle(lesson, language);
+  const nextTitle = nextLesson ? lessonTitle(nextLesson, language) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

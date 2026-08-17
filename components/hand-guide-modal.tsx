@@ -36,7 +36,7 @@ export function HandGuideModal({ lesson, open, onOpenChange, language = "en" }: 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[85vh] max-w-4xl flex-col overflow-hidden sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Finger positions - {lessonTitle(lesson.id, lesson.title, language)}</DialogTitle>
+          <DialogTitle>Finger positions - {lessonTitle(lesson, language)}</DialogTitle>
           <DialogDescription>
             Rest your fingers on the home row ({homeRowGlyphs}) and reach out only for the highlighted keys below.
           </DialogDescription>

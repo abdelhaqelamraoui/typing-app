@@ -169,8 +169,8 @@ export function TypingTrainer({
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle>{lessonTitle(lesson.id, lesson.title, language)}</CardTitle>
-            <CardDescription>{lessonHint(lesson.id, lesson.hint, language)}</CardDescription>
+            <CardTitle>{lessonTitle(lesson, language)}</CardTitle>
+            <CardDescription>{lessonHint(lesson, language)}</CardDescription>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex gap-3 text-sm text-muted-foreground">
