@@ -21,18 +21,6 @@ export const FINGER_COLOR: Record<Finger, string> = {
   thumb: "bg-neutral-400",
 };
 
-export const FINGER_LABEL: Record<Finger, string> = {
-  "l-pinky": "left pinky",
-  "l-ring": "left ring finger",
-  "l-middle": "left middle finger",
-  "l-index": "left index finger",
-  "r-index": "right index finger",
-  "r-middle": "right middle finger",
-  "r-ring": "right ring finger",
-  "r-pinky": "right pinky",
-  thumb: "thumb",
-};
-
 export const KEY_FINGER: Record<string, Finger> = {
   "1": "l-pinky",
   "2": "l-ring",
@@ -133,13 +121,3 @@ export const HOME_KEY_FOR_FINGER: Record<Finger, string> = {
   "r-pinky": ";",
   thumb: "space",
 };
-
-export function reachDescription(key: string): string {
-  const offset = KEY_ROW_OFFSET[key] ?? 0;
-  if (key === " ") return "thumb taps the space bar";
-  if (offset === 0) return "home key - no reach needed";
-  if (offset === -1) return "reach up one row";
-  if (offset === -2) return "reach up two rows";
-  if (offset === 1) return "reach down one row";
-  return "reach";
-}

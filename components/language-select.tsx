@@ -3,6 +3,7 @@
 import { Languages } from "lucide-react";
 
 import { LANGUAGES, LanguageCode } from "@/lib/languages";
+import { STRINGS } from "@/lib/i18n";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Props = {
@@ -13,7 +14,7 @@ type Props = {
 export function LanguageSelect({ value, onChange }: Props) {
   return (
     <Select value={value} onValueChange={(v) => onChange(v as LanguageCode)}>
-      <SelectTrigger aria-label="Change practice language">
+      <SelectTrigger aria-label={STRINGS[value].changeLanguage}>
         <Languages className="text-muted-foreground" />
         <SelectValue />
       </SelectTrigger>

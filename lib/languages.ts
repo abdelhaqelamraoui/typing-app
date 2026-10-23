@@ -7,9 +7,75 @@ export const LANGUAGES: { code: LanguageCode; label: string; nativeLabel: string
   { code: "ar", label: "Arabic", nativeLabel: "العربية" },
 ];
 
+export function isRtl(language: LanguageCode): boolean {
+  return language === "ar";
+}
+
+export type KeyboardLayout = "qwerty" | "azerty";
+
+export const KEYBOARD_LAYOUTS: { code: KeyboardLayout; label: string }[] = [
+  { code: "qwerty", label: "QWERTY" },
+  { code: "azerty", label: "AZERTY" },
+];
+
+/**
+ * Physical-key -> Latin glyph for the French AZERTY layout, for every physical key
+ * whose glyph differs from QWERTY. Digits stay digits (they're typed with Shift on
+ * AZERTY), so lesson keys and finger assignments are unchanged.
+ */
+const KEY_GLYPH_AZERTY: Record<string, string> = {
+  q: "a",
+  w: "z",
+  a: "q",
+  z: "w",
+  ";": "m",
+  m: ",",
+  ",": ";",
+  ".": ":",
+  "/": "!",
+};
+
+/** Unshifted AZERTY number-row symbols, printed under each digit on the keycap. */
+export const AZERTY_NUMBER_SYMBOL: Record<string, string> = {
+  "1": "&",
+  "2": "é",
+  "3": '"',
+  "4": "'",
+  "5": "(",
+  "6": "-",
+  "7": "è",
+  "8": "_",
+  "9": "ç",
+  "0": "à",
+};
+
+/** AZERTY legends for the non-lesson keys, keyed by their QWERTY label in virtual-keyboard.tsx. */
+export const AZERTY_EXTRA_LABEL: Record<string, string> = {
+  "`": "²",
+  "-": ")",
+  "=": "=",
+  "[": "^",
+  "]": "$",
+  "\\": "*",
+  "'": "ù",
+};
+
+function latinGlyph(key: string, layout: KeyboardLayout): string {
+  if (layout !== "azerty") return key;
+  return KEY_GLYPH_AZERTY[key] ?? key;
+}
+
+/** The Latin legend printed on a physical key for the given layout (letters upper-cased). */
+export function latinLegend(key: string, layout: KeyboardLayout): string {
+  const glyph = latinGlyph(key, layout);
+  return /[a-z]/.test(glyph) ? glyph.toUpperCase() : glyph;
+}
+
 /**
  * Physical-key -> glyph map for the standard "Arabic (101)" / "Arabic-PC" keyboard
  * layout (the layout shipped with Windows and offered as "Arabic-PC" on macOS).
+ * "Arabic (102) AZERTY" puts the Arabic letters on the same physical keys, so this
+ * map serves both layouts.
  * Keyed by the same physical-key id used throughout lib/fingers.ts and lib/lessons.ts,
  * so finger/row assignments stay correct - only the printed glyph changes.
  */
@@ -49,8 +115,9 @@ export const KEY_GLYPH_AR: Record<string, string> = {
 /** The Arabic-PC "b" key types a lam-alef ligature - two characters from one keystroke. */
 export const LAM_ALEF_LIGATURE = "لا";
 
-export function glyphFor(language: LanguageCode, key: string): string {
-  if (language !== "ar") return key;
+/** The character a physical key types in the given language and keyboard layout. */
+export function glyphFor(language: LanguageCode, key: string, layout: KeyboardLayout = "qwerty"): string {
+  if (language !== "ar") return latinGlyph(key, layout);
   return KEY_GLYPH_AR[key] ?? key;
 }
 
@@ -107,57 +174,34 @@ function fallbackTitleAr(lesson: Pick<Lesson, "id" | "keys">): string | null {
   return null;
 }
 
-export function lessonTitle(lesson: Pick<Lesson, "id" | "title" | "keys">, language: LanguageCode): string {
-  if (language !== "ar") return lesson.title;
-  return LESSON_TITLE_AR[lesson.id] ?? fallbackTitleAr(lesson) ?? lesson.title;
+export function lessonTitle(
+  lesson: Pick<Lesson, "id" | "title" | "keys">,
+  language: LanguageCode,
+  layout: KeyboardLayout = "qwerty"
+): string {
+  if (language === "ar") return LESSON_TITLE_AR[lesson.id] ?? fallbackTitleAr(lesson) ?? lesson.title;
+  // Key-pair titles follow the printed legends, so "A & ;" reads "Q & M" on AZERTY.
+  if (lesson.keys.length <= 2) return lesson.keys.map((key) => latinLegend(key, layout)).join(" & ");
+  return lesson.title;
 }
 
-export function lessonHint(lesson: Pick<Lesson, "id" | "hint">, language: LanguageCode): string {
-  if (language !== "ar") return lesson.hint;
-  if (LESSON_HINT_AR[lesson.id]) return LESSON_HINT_AR[lesson.id];
-  if (lesson.id.startsWith("accum-")) return "كل ما تعلمته حتى الآن، مجتمعًا";
-  return lesson.hint;
-}
-
-export const STRINGS: Record<
-  LanguageCode,
-  {
-    justStart: string;
-    perfectRun: string;
-    errorsBadge: (n: number) => string;
-    newDrill: string;
-    retry: string;
-    lessonLocked: string;
-    lessonLockedDesc: string;
-    wpm: string;
-    acc: string;
-    errors: string;
-  }
-> = {
-  en: {
-    justStart: "Just start typing - no need to click anything.",
-    perfectRun: "Perfect run - next lesson unlocked",
-    errorsBadge: (n) =>
-      `${n} error${n === 1 ? "" : "s"} - type with zero errors to unlock the next lesson. Press Enter to retry.`,
-    newDrill: "New drill",
-    retry: "Retry",
-    lessonLocked: "Lesson locked",
-    lessonLockedDesc: "Finish the previous lesson with zero errors to unlock this one.",
-    wpm: "wpm",
-    acc: "acc",
-    errors: "errors",
-  },
-  ar: {
-    justStart: "ابدأ الكتابة مباشرة - لا حاجة للنقر على أي شيء.",
-    perfectRun: "أداء مثالي - تم فتح الدرس التالي",
-    errorsBadge: (n) =>
-      `${n === 1 ? "خطأ واحد" : `${n} أخطاء`} - اكتب بدون أخطاء لفتح الدرس التالي. اضغط Enter لإعادة المحاولة.`,
-    newDrill: "تمرين جديد",
-    retry: "إعادة المحاولة",
-    lessonLocked: "الدرس مقفل",
-    lessonLockedDesc: "أنهِ الدرس السابق بدون أخطاء لفتح هذا الدرس.",
-    wpm: "كلمة/د",
-    acc: "الدقة",
-    errors: "أخطاء",
-  },
+const DIGIT_SHIFT_HINT: Record<LanguageCode, string> = {
+  en: "hold Shift for digits on AZERTY",
+  ar: "اضغط Shift لكتابة الأرقام في AZERTY",
 };
+
+export function lessonHint(
+  lesson: Pick<Lesson, "id" | "hint" | "keys">,
+  language: LanguageCode,
+  layout: KeyboardLayout = "qwerty"
+): string {
+  let hint = lesson.hint;
+  if (language === "ar") {
+    if (LESSON_HINT_AR[lesson.id]) hint = LESSON_HINT_AR[lesson.id];
+    else if (lesson.id.startsWith("accum-")) hint = "كل ما تعلمته حتى الآن، مجتمعًا";
+  }
+  if (layout === "azerty" && lesson.keys.some((key) => /[0-9]/.test(key))) {
+    hint = `${hint} (${DIGIT_SHIFT_HINT[language]})`;
+  }
+  return hint;
+}

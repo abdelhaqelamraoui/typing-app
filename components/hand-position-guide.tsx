@@ -4,7 +4,7 @@ import { useMemo } from "react";
 
 import { Lesson } from "@/lib/lessons";
 import { Finger, FINGER_COLOR, KEY_FINGER, KEY_ROW_OFFSET } from "@/lib/fingers";
-import { LanguageCode, glyphFor } from "@/lib/languages";
+import { KeyboardLayout, LanguageCode, glyphFor, latinLegend } from "@/lib/languages";
 import { VirtualKeyboard } from "@/components/virtual-keyboard";
 
 // Column weights below mirror the HOME_ROW / bottom modifier row weights in
@@ -38,15 +38,23 @@ function bestReach(lesson: Lesson, finger: Finger): { key: string; offset: numbe
   return best;
 }
 
-function keyLabel(key: string, language: LanguageCode) {
-  if (language === "ar") return glyphFor(language, key);
-  return /[a-z]/.test(key) ? key.toUpperCase() : key;
+function keyLabel(key: string, language: LanguageCode, layout: KeyboardLayout) {
+  if (language === "ar") return glyphFor(language, key, layout);
+  return latinLegend(key, layout);
 }
 
-export function HandPositionGuide({ lesson, language = "en" }: { lesson: Lesson; language?: LanguageCode }) {
+export function HandPositionGuide({
+  lesson,
+  language = "en",
+  layout = "qwerty",
+}: {
+  lesson: Lesson;
+  language?: LanguageCode;
+  layout?: KeyboardLayout;
+}) {
   const activeKeys = useMemo(
-    () => new Set(lesson.keys.map((key) => glyphFor(language, key))),
-    [lesson, language]
+    () => new Set(lesson.keys.map((key) => glyphFor(language, key, layout))),
+    [lesson, language, layout]
   );
   const activeFingers = useMemo(() => {
     const set = new Set<Finger>();
@@ -59,8 +67,9 @@ export function HandPositionGuide({ lesson, language = "en" }: { lesson: Lesson;
   const thumbActive = activeKeys.has(" ");
 
   return (
-    <div className="w-full">
-      <VirtualKeyboard nextKey={null} activeKeys={activeKeys} language={language} />
+    // The keyboard is a physical object, so it keeps its left-to-right shape in RTL locales.
+    <div dir="ltr" className="w-full">
+      <VirtualKeyboard nextKey={null} activeKeys={activeKeys} language={language} layout={layout} />
 
       <div className="rounded-b-2xl border border-t-0 bg-muted/40 p-3 pt-2 shadow-inner sm:p-4 sm:pt-2">
         <div className="flex w-full gap-1">
@@ -76,7 +85,7 @@ export function HandPositionGuide({ lesson, language = "en" }: { lesson: Lesson;
                 {reach && (
                   <span>
                     {reach.offset < 0 ? "↑" : "↓"}
-                    {keyLabel(reach.key, language)}
+                    {keyLabel(reach.key, language, layout)}
                   </span>
                 )}
               </div>

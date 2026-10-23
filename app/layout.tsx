@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -13,8 +13,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
+  variable: "--font-ibm-plex-sans-arabic",
+  subsets: ["arabic"],
+  weight: ["400", "500", "600", "700"],
+});
+
 const description =
-  "A progressive touch-typing trainer. Practice keyboard-row lessons with a realistic on-screen keyboard and mechanical keystroke sounds - type each lesson with zero errors to unlock the next.";
+  "A progressive touch-typing trainer. Practice keyboard-row lessons with a realistic on-screen keyboard and mechanical keystroke sounds - reach the target accuracy on each lesson to unlock the next.";
 
 // Next doesn't prefix metadata icon hrefs with `basePath` on its own, so this
 // mirrors the same GitHub Pages base path computed in next.config.ts.
@@ -70,7 +76,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${ibmPlexSansArabic.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

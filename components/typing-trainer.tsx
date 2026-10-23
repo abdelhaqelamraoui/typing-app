@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Hand, Keyboard, Lock, RotateCcw } from "lucide-react";
 
 import { Lesson, generateDrillText } from "@/lib/lessons";
-import { LAM_ALEF_LIGATURE, LanguageCode, STRINGS, lessonHint, lessonTitle } from "@/lib/languages";
+import { KeyboardLayout, LAM_ALEF_LIGATURE, LanguageCode, isRtl, lessonHint, lessonTitle } from "@/lib/languages";
+import { STRINGS } from "@/lib/i18n";
 import { typewriterSound } from "@/lib/typewriter-sound";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,56 +20,69 @@ type Props = {
   locked: boolean;
   listening: boolean;
   onComplete: (lessonId: string) => void;
-  onPerfectFinish: () => void;
+  onPass: (accuracy: number) => void;
   showKeyboard: boolean;
   onToggleKeyboard: () => void;
   fontSize: number;
   onFontSizeChange: (size: number) => void;
   onShowHandGuide: () => void;
   language: LanguageCode;
+  layout: KeyboardLayout;
+  /** Minimum accuracy (%) a finished drill needs to count as passed. */
+  passThreshold: number;
 };
 
 const INTERACTIVE_SELECTOR = 'button, a[href], input, textarea, select, [role="slider"]';
 const TEXT_INPUT_SELECTOR = 'input, textarea, select, [role="slider"]';
+
+function accuracyPct(keystrokes: number, errors: number): number {
+  return keystrokes > 0 ? Math.round(((keystrokes - errors) / keystrokes) * 100) : 100;
+}
 
 export function TypingTrainer({
   lesson,
   locked,
   listening,
   onComplete,
-  onPerfectFinish,
+  onPass,
   showKeyboard,
   onToggleKeyboard,
   fontSize,
   onFontSizeChange,
   onShowHandGuide,
   language,
+  layout,
+  passThreshold,
 }: Props) {
   const t = STRINGS[language];
-  const [text, setText] = useState(() => generateDrillText(lesson.keys, language));
+  const [text, setText] = useState(() => generateDrillText(lesson.keys, language, layout));
   const [typedIndex, setTypedIndex] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
   const [keystrokes, setKeystrokes] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [finished, setFinished] = useState(false);
+  const [passed, setPassed] = useState(false);
   const [flash, setFlash] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const flashTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const errorCountRef = useRef(0);
+  const keystrokesRef = useRef(0);
 
   const reset = useCallback(() => {
-    setText(generateDrillText(lesson.keys, language));
+    setText(generateDrillText(lesson.keys, language, layout));
     setTypedIndex(0);
     setErrorCount(0);
     setKeystrokes(0);
     setStartTime(null);
     setFinished(false);
+    setPassed(false);
     setElapsedMs(0);
     errorCountRef.current = 0;
+    keystrokesRef.current = 0;
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-  }, [lesson, language]);
+  }, [lesson, language, layout]);
 
   useEffect(() => {
     if (!startTime || finished) return;
@@ -86,7 +100,8 @@ export function TypingTrainer({
       e.preventDefault();
 
       if (startTime === null) setStartTime(Date.now());
-      setKeystrokes((k) => k + 1);
+      keystrokesRef.current += 1;
+      setKeystrokes(keystrokesRef.current);
 
       if (text.startsWith(e.key, typedIndex)) {
         if (e.key === " ") typewriterSound.space();
@@ -97,10 +112,12 @@ export function TypingTrainer({
 
         if (nextIndex === text.length) {
           setFinished(true);
-          if (errorCountRef.current === 0) {
+          const accuracy = accuracyPct(keystrokesRef.current, errorCountRef.current);
+          if (accuracy >= passThreshold) {
+            setPassed(true);
             typewriterSound.success();
             onComplete(lesson.id);
-            onPerfectFinish();
+            onPass(accuracy);
           } else {
             typewriterSound.bell();
           }
@@ -114,7 +131,7 @@ export function TypingTrainer({
         flashTimeout.current = setTimeout(() => setFlash(false), 300);
       }
     },
-    [locked, finished, listening, startTime, text, typedIndex, onComplete, onPerfectFinish, lesson.id]
+    [locked, finished, listening, startTime, text, typedIndex, passThreshold, onComplete, onPass, lesson.id]
   );
 
   useEffect(() => {
@@ -123,10 +140,8 @@ export function TypingTrainer({
     return () => window.removeEventListener("keydown", handleKey);
   }, [locked, finished, listening, handleKey]);
 
-  const perfect = finished && errorCount === 0;
-
   useEffect(() => {
-    if (locked || !finished || perfect || !listening) return;
+    if (locked || !finished || passed || !listening) return;
     const handleRetryKey = (e: KeyboardEvent) => {
       if (e.key !== "Enter") return;
       if (e.target instanceof HTMLElement && e.target.closest(INTERACTIVE_SELECTOR)) return;
@@ -135,13 +150,12 @@ export function TypingTrainer({
     };
     window.addEventListener("keydown", handleRetryKey);
     return () => window.removeEventListener("keydown", handleRetryKey);
-  }, [locked, finished, perfect, listening, reset]);
+  }, [locked, finished, passed, listening, reset]);
 
   const stats = useMemo(() => {
     const minutes = elapsedMs / 60000;
     const wpm = minutes > 0 ? Math.round(typedIndex / 5 / minutes) : 0;
-    const accuracy = keystrokes > 0 ? Math.round(((keystrokes - errorCount) / keystrokes) * 100) : 100;
-    return { wpm, accuracy };
+    return { wpm, accuracy: accuracyPct(keystrokes, errorCount) };
   }, [elapsedMs, typedIndex, keystrokes, errorCount]);
 
   const progressPct = Math.round((typedIndex / text.length) * 100);
@@ -152,7 +166,7 @@ export function TypingTrainer({
         <CardContent className="flex flex-col items-center gap-2 text-center text-muted-foreground">
           <Lock className="size-8" />
           <p className="font-heading text-base text-foreground">{t.lessonLocked}</p>
-          <p className="text-sm">{t.lessonLockedDesc}</p>
+          <p className="text-sm">{t.lessonLockedDesc(passThreshold)}</p>
         </CardContent>
       </Card>
     );
@@ -169,8 +183,8 @@ export function TypingTrainer({
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div>
-            <CardTitle>{lessonTitle(lesson, language)}</CardTitle>
-            <CardDescription>{lessonHint(lesson, language)}</CardDescription>
+            <CardTitle>{lessonTitle(lesson, language, layout)}</CardTitle>
+            <CardDescription>{lessonHint(lesson, language, layout)}</CardDescription>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex gap-3 text-sm text-muted-foreground">
@@ -185,21 +199,22 @@ export function TypingTrainer({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">A</span>
+              <span className="text-xs text-muted-foreground">{t.fontSizeSmall}</span>
               <Slider
                 value={[fontSize]}
                 min={16}
                 max={36}
                 step={2}
                 onValueChange={([v]) => onFontSizeChange(v)}
+                aria-label={t.fontSize}
                 className="w-24"
               />
-              <span className="text-base text-muted-foreground">A</span>
+              <span className="text-base text-muted-foreground">{t.fontSizeLarge}</span>
             </div>
-            <Button size="icon-sm" variant="outline" aria-label="Show finger position guide" onClick={onShowHandGuide}>
+            <Button size="icon-sm" variant="outline" aria-label={t.showHandGuide} onClick={onShowHandGuide}>
               <Hand />
             </Button>
-            <Button size="icon-sm" variant="outline" aria-label="Toggle on-screen keyboard" onClick={onToggleKeyboard}>
+            <Button size="icon-sm" variant="outline" aria-label={t.toggleKeyboard} onClick={onToggleKeyboard}>
               <Keyboard />
             </Button>
           </div>
@@ -210,7 +225,7 @@ export function TypingTrainer({
 
         <div
           ref={containerRef}
-          dir={language === "ar" ? "rtl" : "ltr"}
+          dir={isRtl(language) ? "rtl" : "ltr"}
           style={{ fontSize: `${fontSize}px` }}
           className={cn(
             "break-all rounded-lg border bg-muted/30 p-5 leading-relaxed transition-colors",
@@ -238,10 +253,10 @@ export function TypingTrainer({
         {finished && (
           <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
             <div className="flex items-center gap-2">
-              {perfect ? (
-                <Badge>{t.perfectRun}</Badge>
+              {passed ? (
+                <Badge>{errorCount === 0 ? t.perfectRun : t.passedBadge(stats.accuracy)}</Badge>
               ) : (
-                <Badge variant="destructive">{t.errorsBadge(errorCount)}</Badge>
+                <Badge variant="destructive">{t.failedBadge(stats.accuracy, passThreshold)}</Badge>
               )}
             </div>
             <Button size="sm" variant="outline" onClick={reset}>
@@ -260,7 +275,7 @@ export function TypingTrainer({
           </div>
         )}
 
-        {showKeyboard && <VirtualKeyboard nextKey={nextGlyph} language={language} />}
+        {showKeyboard && <VirtualKeyboard nextKey={nextGlyph} language={language} layout={layout} />}
       </CardContent>
     </Card>
   );

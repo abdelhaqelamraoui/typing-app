@@ -1,4 +1,11 @@
-import { LanguageCode, glyphFor } from "@/lib/languages";
+import {
+  AZERTY_EXTRA_LABEL,
+  AZERTY_NUMBER_SYMBOL,
+  KeyboardLayout,
+  LanguageCode,
+  glyphFor,
+  latinLegend,
+} from "@/lib/languages";
 
 type KeyDef = {
   label: string;
@@ -93,15 +100,40 @@ const KEY_BASE =
 const KEY_INACTIVE = "border-border bg-background text-foreground shadow-sm";
 const KEY_ACTIVE = "scale-[1.04] border-emerald-400 bg-emerald-500 text-white dark:bg-emerald-400 dark:text-neutral-900";
 
-function Key({ def, active, language }: { def: KeyDef; active: boolean; language: LanguageCode }) {
-  const label = def.char && language === "ar" ? glyphFor(language, def.char) : def.label;
+type KeyLegend = { label: string; sub?: string; latin?: string };
+
+function keyLegend(def: KeyDef, language: LanguageCode, layout: KeyboardLayout): KeyLegend {
+  if (!def.char) {
+    if (layout === "azerty") return { label: AZERTY_EXTRA_LABEL[def.label] ?? def.label };
+    return { label: def.label, sub: def.sub };
+  }
+  if (language === "ar") {
+    // Arabic keycaps also carry the Latin legend, which tells QWERTY and AZERTY boards apart.
+    return { label: glyphFor(language, def.char, layout), latin: latinLegend(def.char, layout) };
+  }
+  return { label: latinLegend(def.char, layout), sub: layout === "azerty" ? AZERTY_NUMBER_SYMBOL[def.char] : def.sub };
+}
+
+function Key({
+  def,
+  active,
+  language,
+  layout,
+}: {
+  def: KeyDef;
+  active: boolean;
+  language: LanguageCode;
+  layout: KeyboardLayout;
+}) {
+  const { label, sub, latin } = keyLegend(def, language, layout);
   return (
     <div
       style={{ flexGrow: def.weight ?? 1, flexBasis: 0 }}
-      className={`${KEY_BASE} h-9 text-sm font-medium ${active ? KEY_ACTIVE : KEY_INACTIVE}`}
+      className={`${KEY_BASE} relative h-9 text-sm font-medium ${active ? KEY_ACTIVE : KEY_INACTIVE}`}
     >
-      {def.sub && <span className="text-[10px] leading-none opacity-70">{def.sub}</span>}
+      {sub && <span className="text-[10px] leading-none opacity-70">{sub}</span>}
       <span className="leading-none">{label}</span>
+      {latin && latin !== label && <span className="absolute top-0.5 left-1 text-[9px] leading-none opacity-50">{latin}</span>}
     </div>
   );
 }
@@ -111,21 +143,24 @@ function Row({
   nextKey,
   activeKeys,
   language,
+  layout,
 }: {
   keys: KeyDef[];
   nextKey: string | null;
   activeKeys?: Set<string>;
   language: LanguageCode;
+  layout: KeyboardLayout;
 }) {
   return (
     <div className="flex w-full gap-1">
       {keys.map((k, i) => {
-        const glyph = k.char ? glyphFor(language, k.char) : undefined;
+        const glyph = k.char ? glyphFor(language, k.char, layout) : undefined;
         return (
           <Key
             key={`${k.label}-${i}`}
             def={k}
             language={language}
+            layout={layout}
             active={!!glyph && (glyph === nextKey || !!activeKeys?.has(glyph))}
           />
         );
@@ -149,13 +184,15 @@ type Props = {
   nextKey: string | null;
   activeKeys?: Set<string>;
   language?: LanguageCode;
+  layout?: KeyboardLayout;
 };
 
-export function VirtualKeyboard({ nextKey, activeKeys, language = "en" }: Props) {
+export function VirtualKeyboard({ nextKey, activeKeys, language = "en", layout = "qwerty" }: Props) {
   const spaceActive = nextKey === " " || !!activeKeys?.has(" ");
 
   return (
-    <div className="w-full rounded-2xl border bg-muted/40 p-3 shadow-inner sm:p-4">
+    // The keyboard is a physical object, so it keeps its left-to-right shape in RTL locales.
+    <div dir="ltr" className="w-full rounded-2xl border bg-muted/40 p-3 shadow-inner sm:p-4">
       <div className="flex flex-col gap-1">
         <div className="flex w-full gap-1">
           {FN_ROW.map((k, i) => (
@@ -169,10 +206,10 @@ export function VirtualKeyboard({ nextKey, activeKeys, language = "en" }: Props)
           ))}
         </div>
 
-        <Row keys={NUMBER_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} />
-        <Row keys={QWERTY_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} />
-        <Row keys={HOME_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} />
-        <Row keys={BOTTOM_LETTER_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} />
+        <Row keys={NUMBER_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} layout={layout} />
+        <Row keys={QWERTY_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} layout={layout} />
+        <Row keys={HOME_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} layout={layout} />
+        <Row keys={BOTTOM_LETTER_ROW} nextKey={nextKey} activeKeys={activeKeys} language={language} layout={layout} />
 
         <div className="flex w-full gap-1">
           <ModKey label="fn" />
