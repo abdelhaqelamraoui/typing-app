@@ -21,6 +21,31 @@ export const FINGER_COLOR: Record<Finger, string> = {
   thumb: "bg-neutral-400",
 };
 
+/** Same palette as FINGER_COLOR, for SVG strokes/fills (the hand illustration). */
+export const FINGER_STROKE: Record<Finger, string> = {
+  "l-pinky": "stroke-rose-400",
+  "l-ring": "stroke-amber-400",
+  "l-middle": "stroke-lime-500",
+  "l-index": "stroke-sky-400",
+  "r-index": "stroke-sky-400",
+  "r-middle": "stroke-lime-500",
+  "r-ring": "stroke-amber-400",
+  "r-pinky": "stroke-rose-400",
+  thumb: "stroke-neutral-400",
+};
+
+export const FINGER_FILL: Record<Finger, string> = {
+  "l-pinky": "fill-rose-400",
+  "l-ring": "fill-amber-400",
+  "l-middle": "fill-lime-500",
+  "l-index": "fill-sky-400",
+  "r-index": "fill-sky-400",
+  "r-middle": "fill-lime-500",
+  "r-ring": "fill-amber-400",
+  "r-pinky": "fill-rose-400",
+  thumb: "fill-neutral-400",
+};
+
 export const KEY_FINGER: Record<string, Finger> = {
   "1": "l-pinky",
   "2": "l-ring",

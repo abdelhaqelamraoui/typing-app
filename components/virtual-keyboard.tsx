@@ -128,6 +128,7 @@ function Key({
   const { label, sub, latin } = keyLegend(def, language, layout);
   return (
     <div
+      data-key={def.char}
       style={{ flexGrow: def.weight ?? 1, flexBasis: 0 }}
       className={`${KEY_BASE} relative h-9 text-sm font-medium ${active ? KEY_ACTIVE : KEY_INACTIVE}`}
     >
@@ -217,6 +218,7 @@ export function VirtualKeyboard({ nextKey, activeKeys, language = "en", layout =
           <ModKey label="option" weight={1.15} />
           <ModKey label="⌘ command" weight={1.4} />
           <div
+            data-key="space"
             style={{ flexGrow: 5.5, flexBasis: 0 }}
             className={`${KEY_BASE} h-9 ${spaceActive ? KEY_ACTIVE : KEY_INACTIVE}`}
           />
