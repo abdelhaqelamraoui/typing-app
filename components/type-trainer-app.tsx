@@ -17,8 +17,19 @@ import { LanguageSelect } from "@/components/language-select";
 import { HandGuideModal } from "@/components/hand-guide-modal";
 import { CongratsModal } from "@/components/congrats-modal";
 import { DEFAULT_PASS_THRESHOLD, SettingsDialog } from "@/components/settings-dialog";
+import { LayoutPickerDialog } from "@/components/layout-picker-dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+
+const LAYOUT_STORAGE_KEY = "typing-app:keyboard-layout";
+
+function hasChosenLayout(): boolean {
+  try {
+    return window.localStorage.getItem(LAYOUT_STORAGE_KEY) !== null;
+  } catch {
+    return true;
+  }
+}
 
 function initialLessonId(language: LanguageCode): string {
   const completed = getCompletedLessons(language);
@@ -31,11 +42,12 @@ export function TypeTrainerApp() {
   const [selectedId, setSelectedId] = useState(() => initialLessonId(language));
   const [showKeyboard, setShowKeyboard] = usePersistentState("typing-app:show-keyboard", true);
   const [fontSize, setFontSize] = usePersistentState("typing-app:font-size", 20);
-  const [layout, setLayout] = usePersistentState<KeyboardLayout>("typing-app:keyboard-layout", "qwerty");
+  const [layout, setLayout] = usePersistentState<KeyboardLayout>(LAYOUT_STORAGE_KEY, "qwerty");
   const [passThreshold, setPassThreshold] = usePersistentState(
     "typing-app:pass-threshold",
     DEFAULT_PASS_THRESHOLD
   );
+  const [layoutPickerOpen, setLayoutPickerOpen] = useState(() => !hasChosenLayout());
   const [handGuideOpen, setHandGuideOpen] = useState(true);
   const [congratsOpen, setCongratsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -53,7 +65,9 @@ export function TypeTrainerApp() {
   const lesson = LESSONS[selectedIndex];
   const nextLesson = LESSONS[selectedIndex + 1] ?? null;
   const isLocked = selectedIndex > 0 && !completed.has(LESSONS[selectedIndex - 1].id);
-  const isModalOpen = (handGuideOpen && !isLocked) || congratsOpen || settingsOpen;
+  // The first-run layout prompt goes first; the hand guide follows once it's answered.
+  const showHandGuide = handGuideOpen && !isLocked && !layoutPickerOpen;
+  const isModalOpen = layoutPickerOpen || showHandGuide || congratsOpen || settingsOpen;
 
   const handleSelectLesson = (id: string) => {
     setSelectedId(id);
@@ -70,6 +84,11 @@ export function TypeTrainerApp() {
     if (!nextLesson) return;
     setCongratsOpen(false);
     handleSelectLesson(nextLesson.id);
+  };
+
+  const handleChooseLayout = (next: KeyboardLayout) => {
+    setLayout(next);
+    setLayoutPickerOpen(false);
   };
 
   const handlePass = (accuracy: number) => {
@@ -143,7 +162,7 @@ export function TypeTrainerApp() {
 
         <HandGuideModal
           lesson={lesson}
-          open={handGuideOpen && !isLocked}
+          open={showHandGuide}
           onOpenChange={setHandGuideOpen}
           language={language}
           layout={layout}
@@ -158,6 +177,7 @@ export function TypeTrainerApp() {
           language={language}
           layout={layout}
         />
+        <LayoutPickerDialog open={layoutPickerOpen} language={language} onChoose={handleChooseLayout} />
         <SettingsDialog
           open={settingsOpen}
           onOpenChange={setSettingsOpen}

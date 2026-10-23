@@ -48,6 +48,10 @@ type Strings = {
   passThresholdDesc: string;
   done: string;
   close: string;
+
+  layoutPickerTitle: string;
+  layoutPickerDesc: string;
+  layoutPickerHint: string;
 };
 
 export const STRINGS: Record<LanguageCode, Strings> = {
@@ -121,6 +125,10 @@ export const STRINGS: Record<LanguageCode, Strings> = {
     passThresholdDesc: "Minimum accuracy needed to pass a lesson and unlock the next one.",
     done: "Done",
     close: "Close",
+
+    layoutPickerTitle: "Which keyboard do you have?",
+    layoutPickerDesc: "Pick the layout printed on your keyboard - look at the first letters of the top row.",
+    layoutPickerHint: "You can change this anytime in Settings.",
   },
   ar: {
     appTitle: "مدرّب الكتابة",
@@ -191,5 +199,9 @@ export const STRINGS: Record<LanguageCode, Strings> = {
     passThresholdDesc: "الحد الأدنى من الدقة لاجتياز الدرس وفتح الدرس التالي.",
     done: "تم",
     close: "إغلاق",
+
+    layoutPickerTitle: "ما نوع لوحة مفاتيحك؟",
+    layoutPickerDesc: "اختر التخطيط المطبوع على لوحة مفاتيحك - انظر إلى الحروف اللاتينية الأولى في الصف العلوي.",
+    layoutPickerHint: "يمكنك تغيير ذلك في أي وقت من الإعدادات.",
   },
 };

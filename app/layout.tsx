@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Geist, Geist_Mono, Readex_Pro } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -13,10 +13,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const ibmPlexSansArabic = IBM_Plex_Sans_Arabic({
-  variable: "--font-ibm-plex-sans-arabic",
+const readexPro = Readex_Pro({
+  variable: "--font-readex-pro",
   subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
 });
 
 const description =
@@ -76,7 +75,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${ibmPlexSansArabic.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${readexPro.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
